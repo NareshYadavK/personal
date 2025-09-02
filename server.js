@@ -1,12 +1,12 @@
-const express = require("express");
-const fetch = require("node-fetch");
-const cors = require("cors");
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ------------------- doctdetails API -------------------
+// doctdetails endpoint
 app.get("/api/doctdetails", async (req, res) => {
   const { SRCODE, DOCNO, RYEAR, BOOKNO } = req.query;
 
@@ -20,13 +20,13 @@ app.get("/api/doctdetails", async (req, res) => {
     });
     const data = await response.json();
     res.json(data);
-  } catch (error) {
-    console.error("Error in doctdetails:", error);
+  } catch (err) {
+    console.error("doctdetails error:", err);
     res.status(500).json({ error: "Failed to fetch doctdetails" });
   }
 });
 
-// ------------------- personDetails API -------------------
+// personDetails endpoint
 app.post("/api/personDetails", async (req, res) => {
   const { uidNum } = req.body;
 
@@ -39,15 +39,13 @@ app.post("/api/personDetails", async (req, res) => {
       },
       body: JSON.stringify({ uidNum })
     });
-
     const data = await response.json();
     res.json(data);
-  } catch (error) {
-    console.error("Error in personDetails:", error);
+  } catch (err) {
+    console.error("personDetails error:", err);
     res.status(500).json({ error: "Failed to fetch personDetails" });
   }
 });
 
-// ------------------- Start Server -------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Proxy running on port ${PORT}`));
