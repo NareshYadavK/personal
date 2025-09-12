@@ -1,51 +1,41 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// doctdetails endpoint
-app.get("/api/doctdetails", async (req, res) => {
-  const { SRCODE, DOCNO, RYEAR, BOOKNO } = req.query;
+// API endpoint
+app.post('/get-person-details', async (req, res) => {
+    const { uidNum } = req.body;
 
-  const url = `https://api.vswsonline.ap.gov.in/regns/pdeapi/v1/apiforother/doctdetails?SRCODE=${SRCODE}&DOCNO=${DOCNO}&RYEAR=${RYEAR}&BOOKNO=${BOOKNO}`;
+    if (!uidNum) {
+        return res.status(400).json({ error: "uidNum is required" });
+    }
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "ocp-apim-subscription-key": "2402114c7f064b42aec9685dac6603f0"
-      }
-    });
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error("doctdetails error:", err);
-    res.status(500).json({ error: "Failed to fetch doctdetails" });
-  }
+    const url = "https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails";
+    const payload = {
+        uidNum: uidNum
+    };
+    const headers = {
+        'Content-Type': "application/json",
+        'Cookie': "SERVER=AppSrv1-IP24"
+    };
+
+    try {
+        const response = await axios.post(url, payload, { headers });
+        res.json(response.data);
+    } catch (error) {
+        console.error('API error:', error.message);
+        res.status(500).json({ error: "Failed to fetch data" });
+    }
 });
 
-// personDetails endpoint
-app.post("/api/personDetails", async (req, res) => {
-  const { uidNum } = req.body;
-
-  try {
-    const response = await fetch("https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json;charset=UTF-8",
-        "Cookie": "SERVER=AppSrv1-IP23"
-      },
-      body: JSON.stringify({ uidNum })
-    });
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error("personDetails error:", err);
-    res.status(500).json({ error: "Failed to fetch personDetails" });
-  }
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Proxy running on port ${PORT}`));
