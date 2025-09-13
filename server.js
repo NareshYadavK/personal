@@ -29,8 +29,12 @@ app.post('/get-person-details', async (req, res) => {
 
         res.json(response.data);
     } catch (error) {
-        console.error(error.message);
-        res.status(500).json({ error: 'Failed to fetch data' });
+        console.error('API request failed:', error.message);
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', error.response.data);
+        }
+        res.status(500).json({ error: 'Failed to fetch data', details: error.message });
     }
 });
 
@@ -42,3 +46,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
