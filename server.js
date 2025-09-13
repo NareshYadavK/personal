@@ -1,25 +1,26 @@
 const express = require('express');
 const axios = require('axios');
 const https = require('https');
-const bodyParser = require('body-parser'); // If needed
-
 const app = express();
 const PORT = process.env.PORT || 10000;
 
 // Middleware
-app.use(express.json()); // Parses incoming JSON requests
-// or use body-parser: app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.static('public')); // Serve static files from 'public'
 
-// POST endpoint
+// Handle GET request at "/"
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Handle POST request at "/get-person-details"
 app.post('/get-person-details', async (req, res) => {
     const { uidNum } = req.body;
     if (!uidNum) {
         return res.status(400).json({ error: 'uidNum is required' });
     }
 
-    const agent = new https.Agent({  
-        rejectUnauthorized: false  // Ignore invalid SSL certs (for testing)
-    });
+    const agent = new https.Agent({ rejectUnauthorized: false });
 
     try {
         const response = await axios.post('https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails', {
