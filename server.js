@@ -1,55 +1,64 @@
+// server.js
+
 const express = require('express');
 const axios = require('axios');
-const https = require('https');
 const app = express();
-const PORT = process.env.PORT || 10000;
+const port = process.env.PORT || 3000;
 
-// Middleware
+// Middleware to parse JSON bodies from incoming requests
 app.use(express.json());
-app.use(express.static('public')); // Serve static files from 'public'
 
-// Handle GET request at "/"
+// Main function to make the API call
+async function getPersonDetails(uidNum) {
+  const url = 'https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails';
+  const headers = {
+    'Content-Type': 'application/json;charset=UTF-8'
+  };
+  const data = {
+    "uidNum": uidNum
+  };
+
+  try {
+    const response = await axios.post(url, data, { headers });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      console.error('API Error Response:', error.response.data);
+      throw new Error('API returned an error.');
+    } else if (error.request) {
+      console.error('No response received from API.');
+      throw new Error('No response from API.');
+    } else {
+      console.error('Error during API request setup:', error.message);
+      throw new Error('Request setup failed.');
+    }
+  }
+}
+
+// Define a POST endpoint for your website's front end to use
+// For example, from your website's form, you can send a POST request to this endpoint
+app.post('/api/personDetails', async (req, res) => {
+  const { uidNum } = req.body;
+
+  if (!uidNum) {
+    return res.status(400).json({ error: 'UID number is required in the request body.' });
+  }
+
+  try {
+    const details = await getPersonDetails(uidNum);
+    res.status(200).json(details);
+  } catch (err) {
+    console.error(`Error in /api/personDetails: ${err.message}`);
+    res.status(500).json({ error: 'Failed to retrieve person details.' });
+  }
+});
+
+// A simple route to confirm the server is running
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+  res.send('Your server is running! Send a POST request to /api/personDetails with a {"uidNum":"..."} body.');
 });
 
-// Handle POST request at "/get-person-details"
-app.post('/get-person-details', async (req, res) => {
-    const { uidNum } = req.body;
-    if (!uidNum) {
-        return res.status(400).json({ error: 'uidNum is required' });
-    }
-
-    const agent = new https.Agent({ rejectUnauthorized: false });
-
-    try {
-        const response = await axios.post('https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails', {
-            uidNum: uidNum
-        }, {
-            headers: {
-                'Content-Type': 'application/json;charset=UTF-8'
-            },
-            httpsAgent: agent
-        });
-
-        res.json(response.data);
-    } catch (error) {
-        console.error('API request failed:');
-        console.error('Message:', error.message);
-        if (error.response) {
-            console.error('Status:', error.response.status);
-            console.error('Data:', error.response.data);
-        } else if (error.request) {
-            console.error('No response received:', error.request);
-        } else {
-            console.error('Error setting up request:', error);
-        }
-        res.status(500).json({ error: 'Failed to fetch data', details: error.message });
-    }
+// Start the server
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
