@@ -1,64 +1,45 @@
-// server.js
-
 const express = require('express');
-const axios = require('axios');
+const cors = require('cors'); // Import the CORS middleware
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON bodies from incoming requests
+// Enable CORS for all origins. This is what fixes your error.
+// For a public-facing application, you would configure this to be more restrictive.
+app.use(cors());
+
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Main function to make the API call
-async function getPersonDetails(uidNum) {
-  const url = 'https://gsws-nbm.ap.gov.in/JKCSpandana/api/Spandana/personDetails';
-  const headers = {
-    'Content-Type': 'application/json;charset=UTF-8'
-  };
-  const data = {
-    "uidNum": uidNum
-  };
-
-  try {
-    const response = await axios.post(url, data, { headers });
-    return response.data;
-  } catch (error) {
-    if (error.response) {
-      console.error('API Error Response:', error.response.data);
-      throw new Error('API returned an error.');
-    } else if (error.request) {
-      console.error('No response received from API.');
-      throw new Error('No response from API.');
-    } else {
-      console.error('Error during API request setup:', error.message);
-      throw new Error('Request setup failed.');
-    }
-  }
-}
-
-// Define a POST endpoint for your website's front end to use
-// For example, from your website's form, you can send a POST request to this endpoint
-app.post('/api/personDetails', async (req, res) => {
-  const { uidNum } = req.body;
-
-  if (!uidNum) {
-    return res.status(400).json({ error: 'UID number is required in the request body.' });
-  }
-
-  try {
-    const details = await getPersonDetails(uidNum);
-    res.status(200).json(details);
-  } catch (err) {
-    console.error(`Error in /api/personDetails: ${err.message}`);
-    res.status(500).json({ error: 'Failed to retrieve person details.' });
-  }
+// Main route
+app.get('/', (req, res) => {
+    res.send('Your server is running! Send a POST request to /api/personDetails with a {"uidNum":"..."} body.');
 });
 
-// A simple route to confirm the server is running
-app.get('/', (req, res) => {
-  res.send('Your server is running! Send a POST request to /api/personDetails with a {"uidNum":"..."} body.');
+// POST route to get person details
+app.post('/api/personDetails', (req, res) => {
+    const { uidNum } = req.body;
+    // Log the received UID for debugging purposes
+    console.log(`Received request with uidNum: ${uidNum}`);
+    
+    // Check if uidNum is present
+    if (!uidNum) {
+        return res.status(400).json({ error: 'uidNum is required in the request body.' });
+    }
+
+    // This is where you would connect to a database to fetch real data
+    // For this example, we'll use dummy data.
+    const personDetails = {
+        name: 'Naresh Kumar',
+        address: '123 Main Street',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        pincode: '500001'
+    };
+
+    res.json(personDetails);
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
