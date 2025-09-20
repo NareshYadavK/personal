@@ -1,47 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>UID Lookup</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Person Details</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="text"] { padding: 8px; font-size: 16px; }
+        button { padding: 10px; font-size: 16px; cursor: pointer; }
+        pre { background-color: #f4f4f4; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        .response-container { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Enter UID Number</h1>
-    <form id="uidForm">
-        <input type="text" name="uidNum" placeholder="Enter UID" required />
-        <button type="submit">Get Details</button>
-    </form>
+    <div class="container">
+        <h1>Get Person Details</h1>
+        <form id="person-form">
+            <label for="uidNum">Enter UID Number:</label>
+            <input type="text" id="uidNum" name="uidNum" value="382837230131" required>
+            <button type="submit">Fetch Details</button>
+        </form>
 
-    <pre id="result"></pre>
+        <div class="response-container">
+            <h2>Response:</h2>
+            <pre id="response-output"></pre>
+        </div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('uidForm');
-            const result = document.getElementById('result');
+        const form = document.getElementById('person-form');
+        const uidInput = document.getElementById('uidNum');
+        const responseOutput = document.getElementById('response-output');
 
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Prevents the form from submitting traditionally
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent the default form submission
 
-                const formData = new FormData(form);
-                const uidNum = formData.get('uidNum');
+            const uidNum = uidInput.value;
+            const apiUrl = 'https://nareshyadavkserver.onrender.com/api/personDetails';
 
-                try {
-                    const response = await fetch('/get-person-details', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uidNum })
-                    });
+            try {
+                responseOutput.textContent = 'Loading...';
 
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
+                // Send a POST request to your Render API
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ uidNum: uidNum })
+                });
 
-                    const data = await response.json();
-                    result.textContent = JSON.stringify(data, null, 2);
-                } catch (error) {
-                    result.textContent = 'Error: ' + error.message;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-            });
+
+                const data = await response.json();
+                responseOutput.textContent = JSON.stringify(data, null, 2);
+                console.log('Success:', data);
+            } catch (error) {
+                responseOutput.textContent = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
         });
     </script>
 </body>
